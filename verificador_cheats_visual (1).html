@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verificador de Cheats</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top, rgba(0, 255, 170, 0.12), transparent 35%),
+        #07110d;
+      color: #eafff6;
+      overflow: hidden;
+    }
+
+    .card {
+      width: min(92vw, 620px);
+      padding: 32px;
+      border: 1px solid rgba(0, 255, 170, 0.3);
+      border-radius: 20px;
+      background: rgba(7, 20, 15, 0.88);
+      box-shadow:
+        0 0 40px rgba(0, 255, 170, 0.08),
+        inset 0 0 40px rgba(0, 255, 170, 0.03);
+      backdrop-filter: blur(10px);
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(0, 255, 170, 0.12);
+      border: 1px solid rgba(0, 255, 170, 0.35);
+      font-size: 24px;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: #8fb5a6;
+      font-size: 0.92rem;
+    }
+
+    .status {
+      margin-bottom: 18px;
+      color: #b8ffdf;
+      font-size: 1rem;
+      min-height: 24px;
+    }
+
+    .bar {
+      height: 14px;
+      background: #0c1b15;
+      border: 1px solid rgba(0, 255, 170, 0.18);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00a86b, #00ff9d);
+      box-shadow: 0 0 16px rgba(0, 255, 157, 0.6);
+      transition: width 0.3s linear;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      color: #6d9988;
+      font-size: 0.86rem;
+    }
+
+    .log {
+      margin-top: 24px;
+      height: 170px;
+      overflow: hidden;
+      padding: 16px;
+      border-radius: 14px;
+      background: #04100b;
+      border: 1px solid rgba(0, 255, 170, 0.12);
+      color: #79d9b2;
+      font-family: Consolas, monospace;
+      font-size: 0.86rem;
+      line-height: 1.65;
+    }
+
+    .result {
+      display: none;
+      margin-top: 24px;
+      padding: 18px;
+      border-radius: 14px;
+      text-align: center;
+      border: 1px solid rgba(0, 255, 170, 0.35);
+      background: rgba(0, 255, 170, 0.08);
+    }
+
+    .result strong {
+      display: block;
+      font-size: 1.2rem;
+      color: #6affbc;
+      margin-bottom: 6px;
+    }
+
+    .pulse {
+      animation: pulse 1.25s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <section class="top">
+      <div class="icon">🛡️</div>
+      <div>
+        <h1>Verificação de Integridade</h1>
+        <div class="subtitle">Analisando cheats, autoclickers, macros e scripts associados ao Roblox.exe...</div>
+      </div>
+    </section>
+
+    <div id="status" class="status pulse">Verificando cheats...</div>
+
+    <div class="bar">
+      <div id="fill" class="fill"></div>
+    </div>
+
+    <div class="meta">
+      <span id="percent">0%</span>
+      <span id="timer">01:00</span>
+    </div>
+
+    <div id="log" class="log"></div>
+
+    <div id="result" class="result">
+      <strong>✓ Nenhum cheat detectado</strong>
+      <span>Nenhum cheat, autoclicker, macro ou script suspeito foi identificado.</span>
+    </div>
+  </main>
+
+  <script>
+    const duration = 60; // segundos
+    let elapsed = 0;
+
+    const fill = document.getElementById("fill");
+    const percent = document.getElementById("percent");
+    const timer = document.getElementById("timer");
+    const status = document.getElementById("status");
+    const result = document.getElementById("result");
+    const log = document.getElementById("log");
+
+    const messages = [
+      "Inicializando módulo de verificação...",
+      "Localizando sessão do Roblox.exe...",
+      "Verificando processos associados ao Roblox.exe...",
+      "Procurando autoclickers ativos...",
+      "Analisando padrões de clique automatizado...",
+      "Verificando macros de teclado e mouse...",
+      "Procurando ferramentas de automação externas...",
+      "Analisando scripts suspeitos associados ao Roblox.exe...",
+      "Verificando possíveis injeções e módulos externos...",
+      "Comparando assinaturas do cliente Roblox...",
+      "Validando integridade da sessão...",
+      "Analisando alterações suspeitas em tempo de execução...",
+      "Verificando hooks de entrada e automação...",
+      "Inspecionando módulos adicionais...",
+      "Finalizando verificação..."
+    ];
+
+    let lastMessageIndex = -1;
+
+    function addLog(text) {
+      const line = document.createElement("div");
+      line.textContent = "> " + text;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    addLog(messages[0]);
+
+    const interval = setInterval(() => {
+      elapsed++;
+
+      const progress = Math.min((elapsed / duration) * 100, 100);
+      fill.style.width = progress + "%";
+      percent.textContent = Math.floor(progress) + "%";
+
+      const remaining = Math.max(duration - elapsed, 0);
+      timer.textContent =
+        "00:" + String(remaining).padStart(2, "0");
+
+      const messageIndex = Math.min(
+        Math.floor((elapsed / duration) * messages.length),
+        messages.length - 1
+      );
+
+      if (messageIndex !== lastMessageIndex) {
+        lastMessageIndex = messageIndex;
+        addLog(messages[messageIndex]);
+      }
+
+      if (elapsed >= duration) {
+        clearInterval(interval);
+        status.textContent = "Verificação concluída";
+        status.classList.remove("pulse");
+        result.style.display = "block";
+        fill.style.width = "100%";
+        percent.textContent = "100%";
+        timer.textContent = "00:00";
+        addLog("Nenhum cheat, autoclicker, macro ou script suspeito encontrado.");
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
